@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tone — say it the right way</title>
+<meta name="description" content="Paste a message, pick a tone, get it rewritten — without changing a single fact." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #faf6ef;
+    --paper-2: #f3ecdf;
+    --card: #fffdf8;
+    --ink: #1c1814;
+    --ink-soft: #6b6258;
+    --line: #e4daccc0;
+    --accent: #d6502f;
+    --accent-dk: #b23d20;
+    --accent-soft: #fbe7df;
+    --green: #3f7d54;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(28,24,20,.04), 0 8px 28px rgba(28,24,20,.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-dk); }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+
+  header {
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    position: sticky; top: 0; z-index: 5;
+    backdrop-filter: saturate(1.1);
+  }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; }
+  .mark { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.4rem; letter-spacing: -.01em; }
+  .mark .dot { color: var(--accent); }
+  .credits-chip {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: .82rem; color: var(--ink-soft);
+    background: var(--card); border: 1px solid var(--line);
+    padding: 7px 12px; border-radius: 999px;
+  }
+  .credits-chip b { color: var(--ink); font-weight: 600; }
+  .btn {
+    font: inherit; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; border-radius: 10px;
+    padding: 11px 18px; transition: transform .04s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 1px 0 var(--accent-dk); }
+  .btn-primary:hover { background: var(--accent-dk); }
+  .btn-primary:disabled { background: #d8cfc2; color: #fff; box-shadow: none; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); padding: 7px 13px; font-size: .85rem; }
+  .btn-ghost:hover { background: var(--paper-2); }
+
+  .hero { padding: 40px 0 18px; }
+  .hero h1 {
+    font-family: "Fraunces", Georgia, serif; font-weight: 600;
+    font-size: clamp(2rem, 5vw, 2.9rem); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 12px;
+  }
+  .hero p { font-size: 1.05rem; color: var(--ink-soft); margin: 0; max-width: 52ch; }
+  .hero .em { color: var(--ink); font-style: italic; }
+
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+
+  .label { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); font-weight: 600; margin: 0 0 10px; }
+
+  .tones { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tone {
+    font: inherit; cursor: pointer; font-size: .9rem;
+    background: var(--paper); border: 1px solid var(--line); color: var(--ink);
+    padding: 8px 14px; border-radius: 999px; transition: all .12s ease;
+  }
+  .tone:hover { border-color: #cdbfa8; }
+  .tone[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .tone-desc { margin: 10px 2px 0; font-size: .88rem; color: var(--ink-soft); min-height: 1.3em; }
+
+  textarea {
+    width: 100%; resize: vertical; min-height: 150px;
+    font: inherit; font-size: 1rem; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px; margin-top: 4px;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+  .count { font-size: .8rem; color: var(--ink-soft); }
+  .count.over { color: var(--accent); font-weight: 600; }
+
+  .result { margin-top: 18px; }
+  .result-card { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; padding: 16px 18px; }
+  .result-card p { margin: 0; white-space: pre-wrap; font-size: 1.02rem; }
+  .result-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+  .note { font-size: .85rem; color: var(--ink-soft); margin-top: 14px; }
+  .error { color: var(--accent-dk); background: var(--accent-soft); border: 1px solid #f0c9bc; border-radius: 10px; padding: 12px 14px; font-size: .92rem; margin-top: 14px; }
+
+  /* Buy credits */
+  .packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 6px; }
+  .pack { text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px; cursor: pointer; font: inherit; transition: all .12s ease; }
+  .pack:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+  .pack .n { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.5rem; }
+  .pack .p { font-size: 1.05rem; font-weight: 600; margin-top: 4px; }
+  .pack .u { font-size: .78rem; color: var(--ink-soft); margin-top: 2px; }
+  .pack .best { display: inline-block; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-dk); background: var(--accent-soft); border-radius: 6px; padding: 2px 7px; margin-top: 8px; }
+
+  dialog { border: none; border-radius: var(--radius); box-shadow: 0 20px 60px rgba(28,24,20,.25); padding: 0; max-width: 520px; width: calc(100% - 32px); background: var(--card); }
+  dialog::backdrop { background: rgba(28,24,20,.4); }
+  .dialog-inner { padding: 24px; }
+  .dialog-inner h2 { font-family: "Fraunces", Georgia, serif; margin: 0 0 6px; font-size: 1.4rem; }
+  .dialog-close { position: absolute; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 12px 18px; border-radius: 10px; font-size: .9rem; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+  .toast.show { opacity: 1; }
+
+  footer { text-align: center; color: var(--ink-soft); font-size: .82rem; padding: 40px 0 30px; }
+
+  @media (max-width: 560px) {
+    .packs { grid-template-columns: 1fr; }
+    .hero { padding: 28px 0 12px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <div class="mark">Tone<span class="dot">.</span></div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="credits-chip" id="creditsChip" title="Your remaining rewrites">
+          <b id="creditsCount">…</b> left
+        </span>
+        <button class="btn-ghost btn" id="openBuy">Buy credits</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>Say it the right way.</h1>
+      <p>Paste a message, choose a tone, get it rewritten — <span class="em">without changing a single fact</span>. No invented details, no hijacking. Just your words, in the register you need.</p>
+    </section>
+
+    <section class="panel">
+      <p class="label">1 · Choose a tone</p>
+      <div class="tones" id="tones" role="group" aria-label="Tone"></div>
+      <p class="tone-desc" id="toneDesc"></p>
+
+      <p class="label" style="margin-top:22px;">2 · Your message</p>
+      <textarea id="input" maxlength="4000" placeholder="Paste the message you want to rewrite…"></textarea>
+      <div class="row">
+        <span class="count" id="count">0 / 4000</span>
+        <button class="btn btn-primary" id="rewrite">Rewrite</button>
+      </div>
+
+      <div id="errorBox" class="error" hidden></div>
+
+      <div class="result" id="result" hidden>
+        <p class="label">Rewritten</p>
+        <div class="result-card"><p id="output"></p></div>
+        <div class="result-actions">
+          <button class="btn btn-ghost" id="copy">Copy</button>
+          <button class="btn btn-ghost" id="reuse">Use as input</button>
+        </div>
+      </div>
+
+      <p class="note">Each rewrite uses one credit. New here? You start with a few free.</p>
+    </section>
+
+    <footer>
+      Tone rewriter · your text is sent to the rewrite service only to produce the rewrite.
+    </footer>
+  </main>
+
+  <dialog id="buyDialog">
+    <div class="dialog-inner">
+      <h2>Top up</h2>
+      <p style="color:var(--ink-soft); margin:0 0 16px; font-size:.95rem;">Credits never expire. Pick a pack — you'll pay securely via Stripe.</p>
+      <div class="packs" id="packs"></div>
+      <div style="text-align:right; margin-top:18px;">
+        <button class="btn btn-ghost" id="closeBuy">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Config (display only; the server is authoritative on price/credits) ----
+  var TONES = [
+    ["firm", "Firm", "Unmistakable and boundaried — no apology, no aggression."],
+    ["oxford", "Oxford", "Elevated British academic register. Precise, authoritative."],
+    ["warm", "Warm", "Friendly and considerate while staying clear."],
+    ["polite_no", "Polite no", "A gracious refusal that doesn't over-explain."],
+    ["concise", "Concise", "Half the length, same meaning, zero padding."],
+    ["diplomatic", "Diplomatic", "De-escalating and neutral. Focuses on the way forward."],
+    ["senior", "Senior", "A calm, senior decision-maker. No permission-seeking."],
+    ["casual", "Casual", "Relaxed and conversational, still clear."],
+    ["apologetic", "Apologetic", "Owns the error once, then moves to the fix."],
+    ["charming", "Charming", "Light personality and wit, substance intact."]
+  ];
+  var PACKS = [
+    { key: "small", credits: 50, price: "£2.99" },
+    { key: "medium", credits: 200, price: "£8.99", best: "Best value" },
+    { key: "large", credits: 500, price: "£17.99" }
+  ];
+
+  var API = {
+    rewrite: "/.netlify/functions/tone-rewriter",
+    credits: "/.netlify/functions/credits",
+    checkout: "/.netlify/functions/create-checkout"
+  };
+
+  // ---- Device wallet token (anonymous, persisted in this browser) ----
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "tk-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+  }
+  var token = localStorage.getItem("tone_token");
+  if (!token) { token = uuid(); localStorage.setItem("tone_token", token); }
+
+  // ---- Element refs ----
+  var $ = function (id) { return document.getElementById(id); };
+  var tonesEl = $("tones"), toneDesc = $("toneDesc"), input = $("input"),
+      count = $("count"), rewriteBtn = $("rewrite"), result = $("result"),
+      output = $("output"), errorBox = $("errorBox"), creditsCount = $("creditsCount"),
+      buyDialog = $("buyDialog"), packsEl = $("packs"), toast = $("toast");
+
+  var selectedTone = "firm";
+  var remaining = null;
+
+  // ---- Render tones ----
+  TONES.forEach(function (t, i) {
+    var b = document.createElement("button");
+    b.className = "tone"; b.type = "button"; b.textContent = t[1];
+    b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    b.dataset.key = t[0]; b.dataset.desc = t[2];
+    b.addEventListener("click", function () {
+      selectedTone = t[0];
+      Array.prototype.forEach.call(tonesEl.children, function (c) { c.setAttribute("aria-pressed", "false"); });
+      b.setAttribute("aria-pressed", "true");
+      toneDesc.textContent = t[2];
+    });
+    tonesEl.appendChild(b);
+  });
+  toneDesc.textContent = TONES[0][2];
+
+  // ---- Render packs ----
+  PACKS.forEach(function (p) {
+    var b = document.createElement("button");
+    b.className = "pack"; b.type = "button";
+    b.innerHTML = '<div class="n">' + p.credits + '</div><div class="u">rewrites</div>' +
+      '<div class="p">' + p.price + '</div>' + (p.best ? '<div class="best">' + p.best + '</div>' : "");
+    b.addEventListener("click", function () { buy(p.key, b); });
+    packsEl.appendChild(b);
+  });
+
+  // ---- Char counter ----
+  function updateCount() {
+    var n = input.value.length;
+    count.textContent = n + " / 4000";
+    count.classList.toggle("over", n > 4000);
+  }
+  input.addEventListener("input", updateCount);
+  updateCount();
+
+  // ---- Balance ----
+  function renderBalance() {
+    if (remaining === null) { creditsCount.textContent = "…"; return; }
+    creditsCount.textContent = remaining;
+    if (remaining <= 0) {
+      rewriteBtn.textContent = "Out of credits — buy more";
+    } else {
+      rewriteBtn.textContent = "Rewrite";
+    }
+  }
+  function fetchBalance() {
+    return fetch(API.credits, { headers: { "x-device-token": token } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d) { remaining = d.remaining; renderBalance(); } })
+      .catch(function () {});
+  }
+
+  // ---- Toast ----
+  var toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg; toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2600);
+  }
+  function showError(msg) { errorBox.textContent = msg; errorBox.hidden = false; }
+  function clearError() { errorBox.hidden = true; }
+
+  // ---- Rewrite ----
+  rewriteBtn.addEventListener("click", function () {
+    if (remaining !== null && remaining <= 0) { openBuyDialog(); return; }
+    var text = input.value.trim();
+    clearError();
+    if (!text) { showError("Type or paste a message first."); return; }
+    if (text.length > 4000) { showError("That's longer than 4000 characters — trim it down."); return; }
+
+    rewriteBtn.disabled = true;
+    rewriteBtn.textContent = "Rewriting…";
+
+    fetch(API.rewrite, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-device-token": token },
+      body: JSON.stringify({ text: text, tone: selectedTone })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+    }).then(function (r) {
+      rewriteBtn.disabled = false;
+      if (r.ok) {
+        output.textContent = r.data.rewrite;
+        result.hidden = false;
+        if (typeof r.data.remaining === "number") { remaining = r.data.remaining; }
+        renderBalance();
+        result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } else if (r.status === 402) {
+        remaining = 0; renderBalance();
+        showError("You're out of credits. Top up to keep rewriting.");
+        openBuyDialog();
+      } else {
+        renderBalance();
+        showError((r.data && r.data.error) || "Something went wrong. Try again.");
+      }
+    }).catch(function () {
+      rewriteBtn.disabled = false; renderBalance();
+      showError("Network error. Check your connection and try again.");
+    });
+  });
+
+  // ---- Copy / reuse ----
+  $("copy").addEventListener("click", function () {
+    navigator.clipboard.writeText(output.textContent).then(function () { showToast("Copied"); });
+  });
+  $("reuse").addEventListener("click", function () {
+    input.value = output.textContent; updateCount(); input.focus();
+  });
+
+  // ---- Buy flow ----
+  function openBuyDialog() { if (typeof buyDialog.showModal === "function") buyDialog.showModal(); }
+  $("openBuy").addEventListener("click", openBuyDialog);
+  $("closeBuy").addEventListener("click", function () { buyDialog.close(); });
+
+  function buy(pack, btn) {
+    btn.disabled = true;
+    fetch(API.checkout, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token, pack: pack })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.url) { window.location.href = d.url; }
+      else { btn.disabled = false; showToast("Couldn't start checkout."); }
+    }).catch(function () { btn.disabled = false; showToast("Couldn't start checkout."); });
+  }
+
+  // ---- Returned from Stripe? ----
+  var params = new URLSearchParams(location.search);
+  if (params.get("paid") === "1") {
+    showToast("Payment received — credits added.");
+    history.replaceState({}, "", location.pathname);
+  } else if (params.get("canceled") === "1") {
+    history.replaceState({}, "", location.pathname);
+  }
+
+  fetchBalance();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+[build]
+  # Static front-end lives at the repo root; functions in netlify/functions.
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
